@@ -1,0 +1,3 @@
+# Silly, often ephemeral work utilities
+
+Nothing to see here...

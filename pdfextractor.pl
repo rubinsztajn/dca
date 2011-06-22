@@ -2,7 +2,7 @@
 
 #----------------------
 # Tool for extracting text from a PDF and encoding it in some basic TEI
-# This is a temporary script, kludging a basic text extraction for full text 
+# This is a temporary script, kludging a basic text extraction for full text
 # searches of PDFs in the TDL.
 #
 # pdfextractor.pl [OBJID].archival.pdf

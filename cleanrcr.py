@@ -25,14 +25,26 @@ def collapse_date(end_date):
     """
     start_date = end_date.getprevious()
     date = end_date.getparent()
-    date.clear()
-    date.text = start_date.text
-    return date
+    if start_date is not None:
+        date.clear()
+        date.text = start_date.text
+        return date
+    else:
+        parent = date.getparent()
+        parent.remove(date)
+        return None
     
 def main():
 
     tree = etree.parse(input_xml)
     out = open(output_xml, 'w')
+
+    # delete all empty elements left by rediscovery. 
+    empties = tree.xpath('//*[not(node())]')
+    for empty in empties:
+        parent = empty.getparent()
+        parent.remove(empty)
+
 
     # clean audit trail date formatting
     timestamps = tree.xpath('//timestamp')
@@ -44,15 +56,22 @@ def main():
         timestamp.text = fresh
         
     # fix audit trail names
-        
     # the name map will eventually be maintained externally as part of the 
     # migration toolkit
         
     name_map = {
-        'KSF': {'first':'Krista','last':'Ferrante'},
-        'JP' : {'first':'Jennifer','last':'Phillips'},
+        'KSF' : {'first':'Krista','last':'Ferrante'},
+        'JP'  : {'first':'Jennifer','last':'Phillips'},
         'VAM' : {'first':'Veronica','last':'Martzhal'},
-        'ADR' : {'first':'Aaron','last':'Rubinstein'}
+        'ADR' : {'first':'Aaron','last':'Rubinstein'},
+        'EEF' : {'first':'Erin','last':'Faulder'},
+        'LU'  : {'first':'Lara','last':'Ullmann'},
+        'SMW' : {'first':'Stacie','last':'Williams'},
+        'MAB' : {'first':'MacKenzie','last':'Brigham'},
+        'Stub': {'first':'Stub','last':'Stub'},
+        'SB'  : {'first':'Susanne','last':'Belovari'},
+        'MDB' : {'first':'Molly','last':'Bruce'}
+        
         }
         
     firstnames = tree.xpath('//staff/firstName')
@@ -70,21 +89,22 @@ def main():
     end_dates = tree.xpath('//recordContext/date/to')
         
     for end_date in end_dates:
-        if end_date.text == '2099-12-31' or '9999-99-99':
+        if (end_date.text == '2099-12-31') or (end_date.text == '9999-99-99'):
             date = collapse_date(end_date)
-            # create ongoing element
-            ongoing = etree.Element('ongoing')
-            ongoing.text = 'true'
-            # insert element after the date element (index = 4)
-            rc = date.getparent()
-            rc.insert(4, ongoing)
+            if date is not None:
+                # create ongoing element
+                ongoing = etree.Element('ongoing')
+                ongoing.text = 'true'
+                # insert element after the date element (index = 4)
+                rc = date.getparent()
+                rc.insert(4, ongoing)
                         
     # split abstracts out of <history>
     histories = tree.xpath('//history')
                         
     for history in histories:
         # check for abstract delimiter and if present, split content accordingly
-        if (history.text is not None) and (history.text.find(" __") != -1):
+        if history.text.find(" __") != -1:
             history_parts = history.text.split(" __")
             # create <abstract> and set text
             abstract = etree.Element('abstract')
@@ -114,6 +134,13 @@ def main():
             sources.clear()
             for citation in citations:
                 etree.SubElement(sources, 'source').text = citation
+
+    # call the <source> XPath again to clean the newlines out of all citations.
+    # This is ugly but oh well...
+    new_sources = tree.xpath('//source')
+    for source in new_sources:
+        source.text = source.text.strip()
+
 
     # write modified XML tree to output file
     out.write(etree.tostring(tree, pretty_print=True))

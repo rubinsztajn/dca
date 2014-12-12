@@ -24,7 +24,7 @@ coder = HTMLEntities.new
 
 # Grab PDF filename from input and create an outfile based on that name
 filename = ARGV[0]
-out_filename = File.basename(filename, ".archival.pdf") + ".access.xml"
+out_filename = File.basename(filename, ".pdf") + "-tei.xml"
 out = File.new(out_filename, "w+")
 
 # Extract text and read in resulting TXT file as a string
@@ -38,21 +38,22 @@ pages = text.split("\f")
 
 header = <<HEADER
 <?xml version="1.0" encoding="utf-8" ?>
-<TEI.2>
+<TEI>
 <teiHeader>
 <fileDesc>
 <titleStmt>
-<title>#{Docsplit.extract_title(filename)}</title>
+<title>#{out_filename}</title>
 </titleStmt>
 <publicationStmt>
-<p>#{Docsplit.extract_producer(filename)}</p>
+<idno type="local">#{out_filename}</idno>
+<publisher>Special Collections and University Archives, University of Massachusetts Amherst Libraries</publisher>
 </publicationStmt>
 <sourceDesc>
 <p>Generated from a source PDF document</p>
 </sourceDesc>
 </fileDesc>
 </teiHeader>
-<text>
+<text xml:lang="en">
 <body>
 HEADER
 
@@ -78,7 +79,7 @@ end
 close = <<CLOSE
 </body>
 </text>
-</TEI.2>
+</TEI>
 CLOSE
 
 out << close
